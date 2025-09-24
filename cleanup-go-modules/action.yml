@@ -1,0 +1,32 @@
+name: Cleanup Go Modules
+description: Remove authentication artifacts used to fetch private Go modules
+
+inputs:
+  token:
+    description: 'Optional access token used during setup'
+    required: false
+
+outputs:
+  result:
+    description: 'passed|failed'
+    value: ${{ steps.cleanup.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Cleanup auth for private Go modules
+      id: cleanup
+      shell: bash
+      run: |
+        set -euo pipefail
+        TOKEN="${{ inputs.token }}"
+
+        # Borrar netrc si existe
+        rm -f ~/.netrc
+
+        # Quitar configuración de git si había token
+        if [ -n "$TOKEN" ]; then
+          git config --global --unset-all url."https://${TOKEN}@github.com/".insteadOf || true
+        fi
+
+        echo "result=passed" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,46 @@
+name: Setup Go Modules
+description: Configure authentication for private Go modules and download dependencies
+
+inputs:
+  token:
+    description: 'Access token for private Go modules (e.g. secrets.GO_TACH_SDK_ACCESS_TOKEN)'
+    required: true
+
+outputs:
+  result:
+    description: 'passed|failed'
+    value: ${{ steps.result.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Configure auth for private Go modules
+      shell: bash
+      run: |
+        set -euo pipefail
+        TOKEN="${{ inputs.token }}"
+
+        # Configuración de .netrc (append en lugar de overwrite)
+        printf "machine github.com login %s password %s\n" "${{ github.actor }}" "$TOKEN" >> ~/.netrc
+        chmod 600 ~/.netrc
+
+        # Configuración de git para usar token
+        git config --global url."https://${TOKEN}@github.com/".insteadOf "https://github.com/"
+
+    - name: Download dependencies
+      id: download
+      shell: bash
+      run: |
+        set -euo pipefail
+        go mod download
+        echo "result=passed" >> "$GITHUB_OUTPUT"
+
+    - name: Result fallback
+      id: result
+      shell: bash
+      run: |
+        if [ -n "${{ steps.download.outputs.result || '' }}" ]; then
+          echo "result=${{ steps.download.outputs.result }}" >> "$GITHUB_OUTPUT"
+        else
+          echo "result=failed" >> "$GITHUB_OUTPUT"
+        fi
