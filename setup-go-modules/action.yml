@@ -3,7 +3,7 @@ description: Configure authentication for private Go modules and download depend
 
 inputs:
   token:
-    description: 'Access token for private Go modules (e.g. secrets.GO_TACH_SDK_ACCESS_TOKEN)'
+    description: 'Access token for private Go modules (e.g. secrets.TOKEN)'
     required: true
 
 outputs:
